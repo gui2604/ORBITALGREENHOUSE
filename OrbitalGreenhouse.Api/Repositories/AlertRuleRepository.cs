@@ -20,12 +20,16 @@ public class AlertRuleRepository : Repository<AlertRule>, IAlertRuleRepository
 {
     public AlertRuleRepository(ApplicationDbContext context) : base(context) { }
 
-    public Task<List<AlertRule>> GetActiveRulesAsync(int metricTypeId, int regionId) =>
-        Set.AsNoTracking()
-            .Where(r => r.IsActive
-                        && r.MetricTypeId == metricTypeId
+    public async Task<List<AlertRule>> GetActiveRulesAsync(int metricTypeId, int regionId)
+    {
+        // Filter IsActive in memory: Oracle EF provider mishandles bool in SQL for NUMBER(1) columns.
+        var rules = await Set.AsNoTracking()
+            .Where(r => r.MetricTypeId == metricTypeId
                         && (r.RegionId == null || r.RegionId == regionId))
             .ToListAsync();
+
+        return rules.Where(r => r.IsActive).ToList();
+    }
 
     public Task<AlertRule?> GetWithDetailsAsync(int id) =>
         Set.AsNoTracking()

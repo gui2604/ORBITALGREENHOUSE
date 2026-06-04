@@ -92,8 +92,8 @@ public class ApplicationDbContext : DbContext
 
             // Map bool to NUMBER(1) for portability (Oracle < 23ai has no native BOOLEAN type).
             e.Property(x => x.IsActive)
-                .HasConversion(v => v ? 1 : 0, v => v == 1)
-                .HasColumnType("NUMBER(1)");
+                .HasColumnType("NUMBER(1)")
+                .HasConversion<int>();
 
             e.HasOne(x => x.MetricType)
                 .WithMany(m => m.AlertRules)
