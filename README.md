@@ -52,7 +52,7 @@ OrbitalGreenhouse/
 │   ├── Dockerfile          # Imagem da API (.NET 9)
 │   └── appsettings.json
 ├── db/                     # Scripts SQL (DDL, seed, consultas) + script EF idempotente
-├── docs/                   # Diagrama ER (PNG/Mermaid), Postman, er-diagram.mmd
+├── docs/                   # ER (PNG), Postman (collection + POSTMAN.md), er-diagram.mmd
 ├── scripts/                # test-api-endpoints.ps1 (smoke tests)
 ├── docker-compose.yml
 ├── .env.example
@@ -245,7 +245,7 @@ A resposta **200** traz o campo `"token"` para colar em **Authorize** (ver seç�
 
 Depois use **login** com exatamente o mesmo e-mail e senha (o e-mail é normalizado para minúsculas).
 
-A coleção Postman em [`docs/`](docs/) já usa `operador@orbital.space` / `orbital123`.
+A coleção e o environment em [`docs/`](docs/) já usam `operador@orbital.space` / `orbital123`. Para importar e testar no Postman, siga [`docs/POSTMAN.md`](docs/POSTMAN.md).
 
 ---
 
@@ -345,18 +345,26 @@ Todos os demais recursos listados em **Endpoints → Protegidos** exigem o JWT c
 | **Reports** | `GET /api/v1/reports/region-health` · `/{regionId}` · `/alerts-summary` |
 | **Health** | `GET /api/healthcheck/full` (verifica conexão Oracle) |
 
-### Postman
+### Postman (collection + environment)
+
+Guia completo: **[`docs/POSTMAN.md`](docs/POSTMAN.md)** (importação, variáveis, fluxo de teste, upload, erros comuns).
 
 | Arquivo | Uso |
 |---------|-----|
-| [`docs/OrbitalGreenhouse.postman_collection.json`](docs/OrbitalGreenhouse.postman_collection.json) | Todos os endpoints agrupados por recurso |
-| [`docs/OrbitalGreenhouse.postman_environment.json`](docs/OrbitalGreenhouse.postman_environment.json) | Variáveis `baseUrl`, `baseUrlHttps` e `token` |
+| [`docs/OrbitalGreenhouse.postman_collection.json`](docs/OrbitalGreenhouse.postman_collection.json) | Requisições agrupadas por recurso + Bearer `{{token}}` |
+| [`docs/OrbitalGreenhouse.postman_environment.json`](docs/OrbitalGreenhouse.postman_environment.json) | `baseUrl`, `baseUrlHttps`, `token` |
+| [`docs/POSTMAN.md`](docs/POSTMAN.md) | Instruções passo a passo para o avaliador |
 
-**Importar:** Postman → **Import** → selecione a collection (e o environment, se quiser).
+**Resumo rápido**
 
-1. Ajuste `baseUrl` (`http://localhost:8080` no Docker ou `https://localhost:7118` no `dotnet run`).
-2. Execute **Auth → Login** com `operador@orbital.space` / `orbital123` (o script salva o JWT em `{{token}}`).
-3. Demais requisições usam Bearer `{{token}}` automaticamente.
+1. **Import** → collection + environment **Orbital Greenhouse - Local**.
+2. Selecione o environment no canto superior direito do Postman.
+3. Ajuste `baseUrl`: `http://localhost:8080` (Docker) ou `https://localhost:7118` (`dotnet run`).
+4. **Auth → Login** com `operador@orbital.space` / `orbital123` → o script grava o JWT em `{{token}}`.
+5. Execute as pastas na ordem sugerida no guia (Regions → Devices → Alert Rules → Ingestion → Alerts → Reports).
+6. Substitua ids `1` nas URLs pelos ids reais retornados nos **Create** (evita **404**).
+
+A collection herda autenticação **Bearer Token** (`{{token}}`). **Ingestion → Upload file** exige escolher um `.json` de `SampleData/` com `deviceIdentifier` já cadastrado.
 
 ### Validação dos endpoints (testes automatizados)
 
