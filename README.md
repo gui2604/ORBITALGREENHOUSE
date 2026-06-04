@@ -355,12 +355,12 @@ Todos os demais recursos listados em **Endpoints → Protegidos** exigem o JWT c
 **Importar:** Postman → **Import** → selecione a collection (e o environment, se quiser).
 
 1. Ajuste `baseUrl` (`http://localhost:8080` no Docker ou `https://localhost:7118` no `dotnet run`).
-2. Execute **Auth → Login** (o script de teste salva o JWT em `{{token}}`).
+2. Execute **Auth → Login** com `operador@orbital.space` / `orbital123` (o script salva o JWT em `{{token}}`).
 3. Demais requisições usam Bearer `{{token}}` automaticamente.
 
-### Testes automatizados (smoke)
+### Validação dos endpoints (testes automatizados)
 
-Script PowerShell que percorre **47 cenários** (CRUD, ingestão, alertas, relatórios e casos 4xx):
+A API foi validada com o script [`scripts/test-api-endpoints.ps1`](scripts/test-api-endpoints.ps1): **47 requisições**, **0 erros 5xx**, fluxo feliz e casos de erro esperados (400/401/404/415).
 
 ```powershell
 # Com a API no ar (Docker ou dotnet run)
@@ -370,7 +370,24 @@ powershell -File .\scripts\test-api-endpoints.ps1
 powershell -File .\scripts\test-api-endpoints.ps1 -BaseUrl "https://localhost:7118"
 ```
 
-O script falha se houver resposta **5xx** ou status inesperado. Útil após alterações ou reinício do container.
+O script falha automaticamente se aparecer **5xx** ou status inesperado.
+
+| Grupo | O que é exercitado | Resultado esperado |
+|-------|-------------------|-------------------|
+| **Auth** | register, login, duplicata, senha errada, sem token | 200 / 400 / 401 |
+| **Health** | básico, full com JWT | 200 |
+| **Regions** | listar, criar, obter, atualizar, id inexistente | 200/201/404 |
+| **Devices** | CRUD, por região, identificador duplicado | 200/201/400 |
+| **Metric types** | listar catálogo seed, obter por id | 200 |
+| **Alert rules** | CRUD completo | 200/201 |
+| **Ingestion** | leitura única, lote, CO₂ alto (alerta), dispositivo inexistente, upload JSON | 200/404 |
+| **Readings** | por id, por dispositivo, id inexistente | 200/404 |
+| **Alerts** | listar, obter, status, manual, filtro, excluir | 200/201/204 |
+| **Reports** | saúde geral, por região, resumo de alertas | 200 |
+
+**Não cobertos pelo script** (validar manualmente no Swagger se necessário): `DELETE` de região com dispositivos vinculados (regra de negócio), `POST`/`PUT`/`DELETE` de métricas do catálogo seed, `DELETE` de dispositivo com leituras.
+
+Após **login** com `operador@orbital.space` / `orbital123` e **Authorize**, o fluxo da tabela na seção Swagger reproduz o mesmo caminho validado pelo script.
 
 ---
 
