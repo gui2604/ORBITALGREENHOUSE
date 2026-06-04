@@ -201,12 +201,124 @@ dotnet run --project OrbitalGreenhouse.Api
 
 Alternativa sem EF: aplicar manualmente os scripts em [`db/`](db/) no Oracle SQL Developer.
 
-### Fluxo de teste no Swagger
-1. `POST /api/v1/auth/register` → cria um operador e retorna um token JWT.
-2. Clique em **Authorize** e informe `Bearer {token}`.
-3. Cadastre regiões, dispositivos e regras de alerta.
-4. Envie leituras em `POST /api/v1/ingestion/readings` (ou faça upload de um arquivo de `SampleData/`).
-5. Consulte alertas e relatórios.
+---
+
+## Credenciais de teste (Swagger / Postman)
+
+A API **não** vem com senha no `appsettings` — o JWT é obtido via **login** ou **register**.
+Em **Development** (Docker ou `dotnet run`), um operador de demonstração é criado automaticamente na subida do servidor.
+
+### Conta padrão para validação
+
+| Campo | Valor |
+|-------|--------|
+| **E-mail** | `operador@orbital.space` |
+| **Senha** | `orbital123` |
+| **Papel** | `Operator` |
+
+Use no Swagger: **Auth → POST /api/v1/auth/login** com o JSON:
+
+```json
+{
+  "email": "operador@orbital.space",
+  "password": "orbital123"
+}
+```
+
+A resposta **200** traz o campo `"token"` para colar em **Authorize** (ver seção Swagger abaixo).
+
+> **Por que aparece `"Credenciais inválidas."` (400)?**  
+> O login só funciona se esse e-mail **já existir** em `OGH_USERS`. Isso ocorre após o seed automático (Development) ou depois de um **register** bem-sucedido.  
+> Se você tentou `operador@fiap.test` / `MinhaSenha123!` **sem** registrar antes, o login falha — ou use a conta padrão acima, ou faça **register** e depois **login** com o **mesmo** e-mail e senha.
+
+### Criar outro usuário (opcional)
+
+**POST /api/v1/auth/register** — mínimo 6 caracteres na senha:
+
+```json
+{
+  "email": "seu.email@fiap.test",
+  "password": "SuaSenha123!",
+  "role": "Operator"
+}
+```
+
+Depois use **login** com exatamente o mesmo e-mail e senha (o e-mail é normalizado para minúsculas).
+
+A coleção Postman em [`docs/`](docs/) já usa `operador@orbital.space` / `orbital123`.
+
+---
+
+### Validar a API no Swagger (passo a passo)
+
+O Swagger **não guarda** o JWT no servidor nem em arquivo de configuração. Você obtém o token no **login/registro**, cola no botão **Authorize** e o navegador envia o header `Authorization` nas próximas chamadas.
+
+#### 1. Abrir o Swagger
+
+Use a URL do ambiente em que a API está rodando (veja a tabela acima):
+
+- Docker: [http://localhost:8080/swagger](http://localhost:8080/swagger)
+- Local HTTPS: [https://localhost:7118/swagger](https://localhost:7118/swagger)
+
+> Se o browser avisar sobre certificado HTTPS em desenvolvimento, aceite o risco ou use o perfil HTTP (`http://localhost:5268/swagger`).
+
+#### 2. Obter o token JWT
+
+1. Expanda **Auth** → **POST /api/v1/auth/login** (recomendado — conta padrão já existe em Development).
+2. Clique em **Try it out**.
+3. Use o body abaixo (**credenciais de teste** documentadas acima):
+
+```json
+{
+  "email": "operador@orbital.space",
+  "password": "orbital123"
+}
+```
+
+4. Clique em **Execute** — espere **200**. Se vier **400** com `"Credenciais inválidas."`, confira e-mail/senha ou reinicie a API (seed do usuário demo) ou faça **register** antes do login.
+5. Copie **somente** o valor do campo `"token"` (começa com `eyJ...`).
+
+Exemplo de trecho da resposta:
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresAt": "2026-06-04T20:00:00Z",
+  "email": "operador@orbital.space",
+  "role": "Operator"
+}
+```
+
+#### 3. Autorizar no Swagger
+
+1. No topo da página, clique no botão **Authorize** (ícone de cadeado).
+2. No campo **Bearer**, cole **apenas** o `token` copiado (sem escrever a palavra `Bearer` — o Swagger adiciona isso automaticamente).
+3. Clique em **Authorize** e depois **Close**.
+
+Endpoints protegidos passam a enviar `Authorization: Bearer {seu-token}`. Se aparecer **401 Unauthorized**, o token não foi informado, expirou (válido por ~4 h) ou foi colado incorretamente — repita o login e o **Authorize**.
+
+#### 4. Ordem sugerida para validar o fluxo completo
+
+| Passo | Endpoint (Swagger) | Observação |
+|-------|-------------------|------------|
+| 1 | `POST /api/v1/auth/login` | Gera o JWT com `operador@orbital.space` / `orbital123` |
+| 2 | `GET /api/healthcheck/full` | Confirma API + Oracle (requer JWT) |
+| 3 | `POST /api/v1/regions` | Cria uma região de cultivo |
+| 4 | `POST /api/v1/devices` | Use `regionId` da região criada |
+| 5 | `GET /api/v1/metric-types` | Catálogo já vem do seed (CO2, TEMPERATURE, etc.) |
+| 6 | `POST /api/v1/alert-rules` | Ex.: `metricTypeId` do CO2, `maxThreshold` 1200 |
+| 7 | `POST /api/v1/ingestion/readings` | JSON com `deviceIdentifier` do dispositivo cadastrado |
+| 8 | `GET /api/v1/alerts` | Ver alertas gerados pela ingestão |
+| 9 | `GET /api/v1/reports/region-health` | Relatório de salubridade |
+
+Para **upload** de arquivo JSON, use `POST /api/v1/ingestion/upload` (multipart) ou teste pelo Postman (mais simples para arquivo).
+
+#### 5. Endpoints que **não** precisam de Authorize
+
+- `GET /` · `GET /api/healthcheck` (básico)
+- `POST /api/v1/auth/register` · `POST /api/v1/auth/login`
+
+Todos os demais recursos listados em **Endpoints → Protegidos** exigem o JWT configurado no passo 3.
 
 ---
 
