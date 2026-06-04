@@ -1,0 +1,20 @@
+services:
+  api:
+    image: ghcr.io/gui2604/orbitalgreenhouse-api:latest
+    build:
+      context: .
+      dockerfile: OrbitalGreenhouse.Api/Dockerfile
+    container_name: orbital-greenhouse-api
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__OracleDb: "User Id=${ORACLE_USER:-RM97674};Password=${ORACLE_PASSWORD};Data Source=oracle.fiap.com.br:1521/ORCL"
+      Jwt__Key: ${JWT_KEY:-orbital-greenhouse-super-secret-key-1234567890-ABCdef!!!###}
+      Jwt__Issuer: orbital-greenhouse
+      Jwt__Audience: orbital-greenhouse-clients
+    env_file:
+      - path: .env
+        required: false
+    restart: unless-stopped

@@ -13,3 +13,7 @@ Logs/
 
 ## Environment overrides (mantenha segredos fora do versionamento)
 appsettings.*.local.json
+.env
+
+## Docker
+.docker/

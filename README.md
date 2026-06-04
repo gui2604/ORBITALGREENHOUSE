@@ -109,6 +109,45 @@ Servidor FIAP: `oracle.fiap.com.br`, SID/service `ORCL`, usuário `RM97674` (ali
 
 ---
 
+## Docker
+
+A API pode rodar em container (Oracle FIAP continua **externo** — o container só precisa de rede até `oracle.fiap.com.br`).
+
+```bash
+# 1. Criar .env a partir do exemplo e informar ORACLE_PASSWORD
+copy .env.example .env
+
+# 2. Subir a API (build + run)
+docker compose up --build -d
+
+# 3. Swagger
+#    http://localhost:8080/swagger
+```
+
+Imagem publicada no **GitHub Container Registry**:
+
+```bash
+docker pull ghcr.io/gui2604/orbitalgreenhouse-api:latest
+docker run -p 8080:8080 \
+  -e ASPNETCORE_ENVIRONMENT=Development \
+  -e ORACLE_PASSWORD=SUA_SENHA \
+  -e ConnectionStrings__OracleDb="User Id=RM97674;Password=${ORACLE_PASSWORD};Data Source=oracle.fiap.com.br:1521/ORCL" \
+  ghcr.io/gui2604/orbitalgreenhouse-api:latest
+```
+
+> Após o primeiro `docker push`, torne o pacote **público** em GitHub → seu perfil → **Packages** → `orbitalgreenhouse-api` → Package settings → Change visibility.
+
+Comandos úteis:
+
+```bash
+docker compose logs -f api
+docker compose down
+```
+
+Em **Development**, o container aplica migrations do EF na inicialização (mesmo comportamento do `dotnet run` local).
+
+---
+
 ## Como executar
 
 ```bash
