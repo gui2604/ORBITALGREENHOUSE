@@ -126,7 +126,7 @@ public class IngestionService : IIngestionService
 
             foreach (var rule in rules)
             {
-                var (violated, reason) = Evaluate(rule, measurement.Value);
+                var (violated, reason) = AlertThresholdEvaluator.Evaluate(rule, measurement.Value);
                 if (!violated) continue;
 
                 metricById.TryGetValue(measurement.MetricTypeId, out var metric);
@@ -156,16 +156,5 @@ public class IngestionService : IIngestionService
             await _alerts.SaveChangesAsync();
 
         return created;
-    }
-
-    private static (bool violated, string reason) Evaluate(AlertRule rule, double value)
-    {
-        if (rule.MinThreshold.HasValue && value < rule.MinThreshold.Value)
-            return (true, $"abaixo do mínimo de {rule.MinThreshold.Value.ToString(CultureInfo.InvariantCulture)}");
-
-        if (rule.MaxThreshold.HasValue && value > rule.MaxThreshold.Value)
-            return (true, $"acima do máximo de {rule.MaxThreshold.Value.ToString(CultureInfo.InvariantCulture)}");
-
-        return (false, string.Empty);
     }
 }

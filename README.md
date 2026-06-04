@@ -41,7 +41,10 @@ OrbitalGreenhouse/
 ├── OrbitalGreenhouse.sln
 ├── OrbitalGreenhouse.Api/
 │   ├── Controllers/        # Regions, Devices, MetricTypes, AlertRules, Alerts, Ingestion, Readings, Reports, Auth, Health, Root
-│   ├── Services/           # *Service.cs + Mappers
+│   ├── Services/           # *Service.cs + AlertThresholdEvaluator + Mappers
+├── OrbitalGreenhouse.Api.Tests/   # Testes unitários (xUnit) — cenários CT-01 … CT-06
+│   ├── Services/           # AlertThreshold, Region, User
+│   └── Support/            # TestScenarioLogger (banners visuais no console)
 │   ├── Repositories/       # IRepository<T> + repositórios específicos
 │   ├── Data/               # ApplicationDbContext + DesignTimeDbContextFactory
 │   ├── Models/             # Entidades + Enums
@@ -365,6 +368,42 @@ Guia completo: **[`docs/POSTMAN.md`](docs/POSTMAN.md)** (importação, variávei
 6. Substitua ids `1` nas URLs pelos ids reais retornados nos **Create** (evita **404**).
 
 A collection herda autenticação **Bearer Token** (`{{token}}`). **Ingestion → Upload file** exige escolher um `.json` de `SampleData/` com `deviceIdentifier` já cadastrado.
+
+### Testes unitários (xUnit)
+
+Projeto [`OrbitalGreenhouse.Api.Tests`](OrbitalGreenhouse.Api.Tests/): **6 cenários** com logs em banner no console (`TestScenarioLogger`). Não exigem Oracle — usam mocks ou lógica pura.
+
+| ID | O que valida | Classe / método |
+|----|----------------|-----------------|
+| **CT-01** | CO₂ dentro da faixa (850 ppm, máx 1200) → sem violação | `AlertThresholdEvaluatorTests.CT01_*` |
+| **CT-02** | CO₂ acima do máximo (1850 ppm) → alerta na ingestão | `AlertThresholdEvaluatorTests.CT02_*` |
+| **CT-03** | O₂ abaixo do mínimo (17,8 %, mín 19) → violação | `AlertThresholdEvaluatorTests.CT03_*` |
+| **CT-04** | Código de região duplicado (`BAY-A1`) → 400 | `RegionServiceTests.CT04_*` |
+| **CT-05** | Login com e-mail inexistente → `Credenciais inválidas.` | `UserServiceTests.CT05_*` |
+| **CT-06** | Excluir região com dispositivos vinculados → 400 | `RegionServiceTests.CT06_*` |
+
+**Executar e ver os logs**
+
+```powershell
+dotnet test OrbitalGreenhouse.sln --verbosity normal
+```
+
+Exemplo de saída (trecho do **CT-02**):
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  CT-02 | CO2 acima do máximo — violação                      ║
+╚══════════════════════════════════════════════════════════════╝
+  ► Violou regra? True
+    Métrica     : CO2
+    Valor       : 1850 ppm
+    Limiar máx  : 1200
+    Motivo      : acima do máximo de 1200
+  ✔ RESULTADO : Ingestão geraria alerta automático (ex.: leitura SENSOR-A1-02).
+  ✔ STATUS    : PASSED
+```
+
+A avaliação de limiares na ingestão usa [`AlertThresholdEvaluator`](OrbitalGreenhouse.Api/Services/AlertThresholdEvaluator.cs) (extraído de `IngestionService` para testabilidade).
 
 ### Validação dos endpoints (testes automatizados)
 

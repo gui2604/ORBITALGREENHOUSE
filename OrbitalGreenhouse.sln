@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrbitalGreenhouse.Api", "OrbitalGreenhouse.Api\OrbitalGreenhouse.Api.csproj", "{D76A3D9A-15E7-441E-BD7F-BD6A9C415450}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrbitalGreenhouse.Api.Tests", "OrbitalGreenhouse.Api.Tests\OrbitalGreenhouse.Api.Tests.csproj", "{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,18 @@ Global
 		{D76A3D9A-15E7-441E-BD7F-BD6A9C415450}.Release|x64.Build.0 = Release|Any CPU
 		{D76A3D9A-15E7-441E-BD7F-BD6A9C415450}.Release|x86.ActiveCfg = Release|Any CPU
 		{D76A3D9A-15E7-441E-BD7F-BD6A9C415450}.Release|x86.Build.0 = Release|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Debug|x64.Build.0 = Debug|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Debug|x86.Build.0 = Debug|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Release|x64.ActiveCfg = Release|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Release|x64.Build.0 = Release|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Release|x86.ActiveCfg = Release|Any CPU
+		{1C3181FD-DF34-4D60-9523-6B1F49C46F9C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
