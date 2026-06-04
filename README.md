@@ -49,10 +49,17 @@ OrbitalGreenhouse/
 │   ├── Exceptions/         # Exceções de domínio + GlobalExceptionHandler
 │   ├── Migrations/         # Migrations EF Core (Oracle)
 │   ├── SampleData/         # Arquivos JSON de sensores para simulação
+│   ├── Dockerfile          # Imagem da API (.NET 9)
 │   └── appsettings.json
 ├── db/                     # Scripts SQL (DDL, seed, consultas) + script EF idempotente
-└── docs/                   # Diagrama ER + coleção Postman
+├── docs/                   # Diagrama ER (PNG/Mermaid), Postman, er-diagram.mmd
+├── scripts/                # test-api-endpoints.ps1 (smoke tests)
+├── docker-compose.yml
+├── .env.example
+└── .github/workflows/      # Publicação da imagem no GHCR
 ```
+
+Repositório: [github.com/gui2604/ORBITALGREENHOUSE](https://github.com/gui2604/ORBITALGREENHOUSE)
 
 ---
 
@@ -71,7 +78,17 @@ OrbitalGreenhouse/
 | `OGH_ALERTS` | Alertas gerados (automáticos ou manuais) com ciclo de vida |
 | `OGH_USERS` | Operadores autenticados via JWT |
 
-O **diagrama ER** (Mermaid) está em [`docs/ER_DIAGRAM.md`](docs/ER_DIAGRAM.md).
+### Diagrama entidade-relacionamento
+
+![Diagrama ER — Orbital Greenhouse](docs/ER_DIAGRAM.png)
+
+| Artefato | Descrição |
+|----------|-----------|
+| [`docs/ER_DIAGRAM.png`](docs/ER_DIAGRAM.png) | Imagem PNG do diagrama (entrega / documentação) |
+| [`docs/ER_DIAGRAM.md`](docs/ER_DIAGRAM.md) | Versão Mermaid + cardinalidade e regras de integridade |
+| [`docs/er-diagram.mmd`](docs/er-diagram.mmd) | Fonte Mermaid para regerar o PNG |
+
+**Relacionamentos principais:** região → dispositivos → leituras → medições; regras de alerta e alertas ligados a métricas, regiões e dispositivos; usuários reconhecem alertas.
 
 ---
 
@@ -81,7 +98,16 @@ O **diagrama ER** (Mermaid) está em [`docs/ER_DIAGRAM.md`](docs/ER_DIAGRAM.md).
 - Entity Framework Core 9 + **Oracle** (`Oracle.EntityFrameworkCore`)
 - Autenticação **JWT** (`Microsoft.AspNetCore.Authentication.JwtBearer`)
 - **Swagger / OpenAPI** (Swashbuckle)
+- **Docker** + **GitHub Container Registry** (`ghcr.io/gui2604/orbitalgreenhouse-api`)
 - Arquitetura em camadas (Controller / Service / Repository)
+
+### Compatibilidade Oracle (EF Core)
+
+A API foi ajustada para o Oracle FIAP (tipos `NUMBER(1)` em vez de `BOOLEAN`, SQL sem literal `FALSE`):
+
+- `ExistsAsync` usa `CountAsync` em vez de `AnyAsync` (evita `ORA-00904`).
+- Regras de alerta ativas: filtro `IsActive` em memória após a query SQL.
+- Campos `bool` mapeados com `HasConversion<int>()` onde necessário.
 
 ---
 
@@ -144,23 +170,32 @@ docker compose logs -f api
 docker compose down
 ```
 
-Em **Development**, o container aplica migrations do EF na inicialização (mesmo comportamento do `dotnet run` local).
+Em **Development**, a API aplica **migrations do EF na inicialização** (`Database.Migrate()`), criando tabelas e o seed das 8 métricas do catálogo — tanto no `dotnet run` quanto no container.
+
+| Ambiente | URL base | Swagger |
+|----------|----------|---------|
+| Docker (`docker compose`) | `http://localhost:8080` | `/swagger` |
+| `dotnet run` (perfil https) | `https://localhost:7118` | `/swagger` |
+| `dotnet run` (perfil http) | `http://localhost:5268` | `/swagger` |
 
 ---
 
-## Como executar
+## Como executar (local)
 
 ```bash
-# 1. Restaurar pacotes
+# 1. Configurar senha Oracle (ver seção acima)
+copy OrbitalGreenhouse.Api\appsettings.Development.local.example.json OrbitalGreenhouse.Api\appsettings.Development.local.json
+
+# 2. Restaurar pacotes
 dotnet restore
 
-# 2. Aplicar o schema no Oracle (cria tabelas + seed das métricas)
+# 3. (Opcional) aplicar schema manualmente — em Development a API já migra ao subir
 dotnet ef database update --project OrbitalGreenhouse.Api
 
-# 3. Rodar a API
+# 4. Rodar a API
 dotnet run --project OrbitalGreenhouse.Api
 
-# 4. Abrir o Swagger
+# 5. Swagger
 #    https://localhost:7118/swagger
 ```
 
@@ -198,7 +233,32 @@ Alternativa sem EF: aplicar manualmente os scripts em [`db/`](db/) no Oracle SQL
 | **Reports** | `GET /api/v1/reports/region-health` · `/{regionId}` · `/alerts-summary` |
 | **Health** | `GET /api/healthcheck/full` (verifica conexão Oracle) |
 
-Coleção Postman pronta em [`docs/OrbitalGreenhouse.postman_collection.json`](docs/OrbitalGreenhouse.postman_collection.json).
+### Postman
+
+| Arquivo | Uso |
+|---------|-----|
+| [`docs/OrbitalGreenhouse.postman_collection.json`](docs/OrbitalGreenhouse.postman_collection.json) | Todos os endpoints agrupados por recurso |
+| [`docs/OrbitalGreenhouse.postman_environment.json`](docs/OrbitalGreenhouse.postman_environment.json) | Variáveis `baseUrl`, `baseUrlHttps` e `token` |
+
+**Importar:** Postman → **Import** → selecione a collection (e o environment, se quiser).
+
+1. Ajuste `baseUrl` (`http://localhost:8080` no Docker ou `https://localhost:7118` no `dotnet run`).
+2. Execute **Auth → Login** (o script de teste salva o JWT em `{{token}}`).
+3. Demais requisições usam Bearer `{{token}}` automaticamente.
+
+### Testes automatizados (smoke)
+
+Script PowerShell que percorre **47 cenários** (CRUD, ingestão, alertas, relatórios e casos 4xx):
+
+```powershell
+# Com a API no ar (Docker ou dotnet run)
+powershell -File .\scripts\test-api-endpoints.ps1
+
+# Outra URL base
+powershell -File .\scripts\test-api-endpoints.ps1 -BaseUrl "https://localhost:7118"
+```
+
+O script falha se houver resposta **5xx** ou status inesperado. Útil após alterações ou reinício do container.
 
 ---
 
