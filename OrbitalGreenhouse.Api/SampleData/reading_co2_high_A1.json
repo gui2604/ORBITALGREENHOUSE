@@ -1,0 +1,9 @@
+{
+  "deviceIdentifier": "SENSOR-A1-02",
+  "collectedAt": "2026-06-04T12:05:00Z",
+  "measurements": [
+    { "metricCode": "CO2", "value": 1850 },
+    { "metricCode": "O2", "value": 17.8 },
+    { "metricCode": "TEMPERATURE", "value": 28.6 }
+  ]
+}

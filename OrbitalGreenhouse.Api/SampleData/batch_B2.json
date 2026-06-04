@@ -1,0 +1,22 @@
+[
+  {
+    "deviceIdentifier": "SENSOR-B2-01",
+    "collectedAt": "2026-06-04T12:00:00Z",
+    "measurements": [
+      { "metricCode": "TEMPERATURE", "value": 21.1 },
+      { "metricCode": "HUMIDITY", "value": 58.0 },
+      { "metricCode": "CO2", "value": 920 },
+      { "metricCode": "O2", "value": 20.5 }
+    ]
+  },
+  {
+    "deviceIdentifier": "SENSOR-B2-01",
+    "collectedAt": "2026-06-04T12:10:00Z",
+    "measurements": [
+      { "metricCode": "TEMPERATURE", "value": 24.7 },
+      { "metricCode": "HUMIDITY", "value": 49.0 },
+      { "metricCode": "CO2", "value": 1320 },
+      { "metricCode": "O2", "value": 18.4 }
+    ]
+  }
+]

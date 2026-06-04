@@ -1,0 +1,11 @@
+{
+  "deviceIdentifier": "SENSOR-A1-01",
+  "collectedAt": "2026-06-04T12:00:00Z",
+  "measurements": [
+    { "metricCode": "TEMPERATURE", "value": 22.4 },
+    { "metricCode": "HUMIDITY", "value": 63.0 },
+    { "metricCode": "CO2", "value": 850 },
+    { "metricCode": "O2", "value": 20.9 },
+    { "metricCode": "LUMINOSITY", "value": 540 }
+  ]
+}
